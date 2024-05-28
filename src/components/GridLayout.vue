@@ -20,7 +20,7 @@
     import mitt from 'mitt';
     const elementResizeDetectorMaker = require("element-resize-detector");
 
-    import {bottom, compact, getLayoutItem, moveElement, validateLayout, cloneLayout, getAllCollisions} from '@/helpers/utils';
+    import {compact, findBottomWidget, getAboveMargins, getLayoutItem, moveElement, validateLayout, cloneLayout, getAllCollisions} from '@/helpers/utils';
     import {getBreakpointFromWidth, getColsFromBreakpoint, findOrGenerateResponsiveLayout} from "@/helpers/responsiveUtils";
     //var eventBus = require('./eventBus');
 
@@ -303,8 +303,12 @@
                 if (!this.autoSize) return;
                 // console.log("bottom: " + bottom(this.layout))
                 // console.log("rowHeight + margins: " + (this.rowHeight + this.margin[1]) + this.margin[1])
-                const containerHeight =  bottom(this.layout) * (this.rowHeight + this.margin[1]) + this.margin[1] + 'px';
-                return containerHeight;
+                let lastWidget = findBottomWidget(this.layout);
+                const baseHeight = (lastWidget.y + lastWidget.h) * this.rowHeight;
+                const marginsNumber = getAboveMargins(this.layout, lastWidget.x, lastWidget.y, lastWidget.w);
+
+                const containerHeight = baseHeight + marginsNumber * this.margin[1];
+                return `${containerHeight}px`;
             },
             dragEvent: function (eventName, id, x, y, h, w) {
                 //console.log(eventName + " id=" + id + ", x=" + x + ", y=" + y);

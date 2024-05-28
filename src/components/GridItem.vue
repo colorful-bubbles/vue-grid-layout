@@ -87,7 +87,7 @@
     }
 </style>
 <script>
-    import {setTopLeft, setTopRight, setTransformRtl, setTransform} from '@/helpers/utils';
+    import {getAboveMargins, setTopLeft, setTopRight, setTransformRtl, setTransform} from '@/helpers/utils';
     import {getControlPosition, createCoreData} from '@/helpers/draggableUtils';
     import {getColsFromBreakpoint} from '@/helpers/responsiveUtils';
     import {getDocumentDir} from "@/helpers/DOM";
@@ -664,27 +664,28 @@
             },
             calcPosition: function (x, y, w, h) {
                 const colWidth = this.calcColWidth();
+                const marginsAbove = getAboveMargins(this.layout.layout, x, y, w);
                 // add rtl support
                 let out;
                 if (this.renderRtl) {
                     out = {
                         right: Math.round(colWidth * x + (x + 1) * this.margin[0]),
-                        top: Math.round(this.rowHeight * y + (y + 1) * this.margin[1]),
+                        top: Math.round(this.rowHeight * y + (marginsAbove * this.margin[1])),
                         // 0 * Infinity === NaN, which causes problems with resize constriants;
                         // Fix this if it occurs.
                         // Note we do it here rather than later because Math.round(Infinity) causes deopt
                         width: w === Infinity ? w : Math.round(colWidth * w + Math.max(0, w - 1) * this.margin[0]),
-                        height: h === Infinity ? h : Math.round(this.rowHeight * h + Math.max(0, h - 1) * this.margin[1])
+                        height: h === Infinity ? h : Math.round(this.rowHeight * h)
                     };
                 } else {
                     out = {
                         left: Math.round(colWidth * x + (x + 1) * this.margin[0]),
-                        top: Math.round(this.rowHeight * y + (y + 1) * this.margin[1]),
+                        top: Math.round(this.rowHeight * y + (marginsAbove * this.margin[1])),
                         // 0 * Infinity === NaN, which causes problems with resize constriants;
                         // Fix this if it occurs.
                         // Note we do it here rather than later because Math.round(Infinity) causes deopt
                         width: w === Infinity ? w : Math.round(colWidth * w + Math.max(0, w - 1) * this.margin[0]),
-                        height: h === Infinity ? h : Math.round(this.rowHeight * h + Math.max(0, h - 1) * this.margin[1])
+                        height: h === Infinity ? h : Math.round(this.rowHeight * h)
                     };
                 }
 
@@ -709,7 +710,7 @@
                 // (l - m) / (c + m) = x
                 // x = (left - margin) / (coldWidth + margin)
                 let x = Math.round((left - this.margin[0]) / (colWidth + this.margin[0]));
-                let y = Math.round((top - this.margin[1]) / (this.rowHeight + this.margin[1]));
+                let y = Math.round(top / this.rowHeight);
 
                 // Capping
                 x = Math.max(Math.min(x, this.cols - this.innerW), 0);
@@ -740,9 +741,9 @@
                 let w = Math.round((width + this.margin[0]) / (colWidth + this.margin[0]));
                 let h = 0;
                 if (!autoSizeFlag) {
-                    h = Math.round((height + this.margin[1]) / (this.rowHeight + this.margin[1]));
+                    h = Math.round(height / this.rowHeight);
                 } else {
-                    h = Math.ceil((height + this.margin[1]) / (this.rowHeight + this.margin[1]));
+                    h = Math.ceil(height / this.rowHeight);
                 }
 
                 // Capping

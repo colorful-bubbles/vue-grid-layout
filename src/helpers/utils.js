@@ -155,6 +155,69 @@ export function correctBounds(layout: Layout, bounds: {cols: number}): Layout {
   return layout;
 }
 
+export function findBottomWidget(layout: Layout) {
+  let max = 0;
+  let widget = null;
+
+  for (let i = 0, len = layout.length; i < len; i++) {
+    const bottomY = layout[i].y + layout[i].h;
+    if (bottomY > max) {
+      max = bottomY;
+      widget = layout[i];
+    }
+  }
+
+  return widget;
+}
+
+export function findWidgetAbove(layout, x, x2, y) {
+  let lastWidget = null;
+
+  // First, let's find the closest widget
+  // that's above this one:
+  for (let widget of layout) {
+    if (widget.y < y &&
+    (
+      (widget.x >= x && widget.x < x2) ||
+      (widget.x + widget.w > x && widget.x + widget.w <= x2)
+    )
+    ) {
+      if (lastWidget === null || (lastWidget.y + lastWidget.h) < (widget.y + widget.h)) {
+        lastWidget = widget;
+      }
+    }
+  }
+
+  return lastWidget;
+}
+
+export function getAboveMargins(layout, x, y, w): number {
+  let result = 0;
+  let lastWidget = findWidgetAbove(layout, x, x + w, y);
+
+  // No widget's above, finish here:
+  if (!lastWidget) {
+    return result;
+  }
+
+  ++result;
+
+  while (lastWidget) {
+    lastWidget = findWidgetAbove(
+      layout,
+      lastWidget.x,
+      lastWidget.x + lastWidget.w,
+      lastWidget.y,
+    );
+
+    if (lastWidget) {
+      ++result;
+    }
+  }
+
+  return result;
+}
+
 /**
  * Get a layout item by ID. Used so we can override later on if necessary.
  *
