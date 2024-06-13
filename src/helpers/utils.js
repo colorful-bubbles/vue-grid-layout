@@ -77,7 +77,7 @@ export function collides(l1: LayoutItem, l2: LayoutItem): boolean {
  *   vertically.
  * @return {Array}       Compacted Layout.
  */
-export function compact(layout: Layout, verticalCompact: Boolean): Layout {
+export function compact(layout: Layout, verticalCompact: Boolean, margin, rowHeight): Layout {
     // Statics go in the compareWith array right away so items flow around them.
   const compareWith = getStatics(layout);
   // We go through the items by row and column.
@@ -90,7 +90,7 @@ export function compact(layout: Layout, verticalCompact: Boolean): Layout {
 
     // Don't move static elements
     if (!l.static) {
-      l = compactItem(compareWith, l, verticalCompact);
+      l = compactItem(compareWith, l, verticalCompact, margin, rowHeight);
 
       // Add to comparison array. We only collide with items before this one.
       // Statics are already in this array.
@@ -110,19 +110,33 @@ export function compact(layout: Layout, verticalCompact: Boolean): Layout {
 /**
  * Compact an item in the layout.
  */
-export function compactItem(compareWith: Layout, l: LayoutItem, verticalCompact: boolean): LayoutItem {
-  if (verticalCompact) {
-    // Move the element up as far as it can go without colliding.
-    while (l.y > 0 && !getFirstCollision(compareWith, l)) {
-      l.y--;
+export function compactItem(compareWith: Layout, l: LayoutItem, verticalCompact: boolean, margin, rowHeight): LayoutItem {
+  const aboveWidgets = getAboveMargins(compareWith, l.x, l.y, l.w, margin, rowHeight);
+  let lastWidget = null;
+
+  for (let w of aboveWidgets) {
+    if (lastWidget === null || lastWidget.y < w.y) {
+      lastWidget = w;
     }
   }
 
-  // Move it down, and keep moving it down if it's colliding.
-  let collides;
-  while((collides = getFirstCollision(compareWith, l))) {
-    l.y = collides.y + collides.h;
-  }
+  l.y = lastWidget ? lastWidget.y + lastWidget.h : 0;
+
+  // if (verticalCompact) {
+  //   // Move the element up as far as it can go without colliding.
+  //   while (l.y > 0 && !getFirstCollision(compareWith, l)) {
+  //     if (l.i === '5') {
+  //       console.warn(l.y - 1);
+  //     }
+  //     l.y--;
+  //   }
+  // }
+
+  // // Move it down, and keep moving it down if it's colliding.
+  // let collides;
+  // while((collides = getFirstCollision(compareWith, l))) {
+  //   l.y = collides.y + collides.h;
+  // }
   return l;
 }
 
@@ -170,8 +184,10 @@ export function findBottomWidget(layout: Layout) {
   return widget;
 }
 
-export function findWidgetAbove(layout, x, x2, y) {
-  let lastWidget = null;
+// This will work only within single section:
+export function findWidgetsAboveWithinSection(layout, x, y) {
+  const x2 = x + 1;
+  let result = [];
 
   // First, let's find the closest widget
   // that's above this one:
@@ -179,40 +195,60 @@ export function findWidgetAbove(layout, x, x2, y) {
     if (widget.y < y &&
     (
       (widget.x >= x && widget.x < x2) ||
-      (widget.x + widget.w > x && widget.x + widget.w <= x2)
+      (widget.x + widget.w > x && widget.x + widget.w <= x2) ||
+      (widget.x < x && widget.x + widget.w > x2)
     )
     ) {
-      if (lastWidget === null || (lastWidget.y + lastWidget.h) < (widget.y + widget.h)) {
-        lastWidget = widget;
-      }
+      result.push(widget);
     }
   }
 
-  return lastWidget;
+  return result;
 }
 
-export function getAboveMargins(layout, x, y, w): number {
-  let result = 0;
-  let lastWidget = findWidgetAbove(layout, x, x + w, y);
+export function findWidgetAbove(layout, x, y, w, margin, rowHeight): number {
+  const x2 = x + w;
+  let widgetsSet = [];
+  let height = 0;
+  let result = null;
 
-  // No widget's above, finish here:
-  if (!lastWidget) {
-    return result;
+  for (let tempX = x; tempX < x2; ++tempX)
+  {
+    const widgets = findWidgetsAboveWithinSection(layout, tempX, y);
+    let tempHeight = widgets.length * margin;
+
+    for (let w of widgets) {
+      tempHeight += w.h * rowHeight;
+    }
+
+    if (height < tempHeight)
+    {
+      height = tempHeight;
+      widgetsSet = widgets;
+    }
   }
 
-  ++result;
-
-  while (lastWidget) {
-    lastWidget = findWidgetAbove(
-      layout,
-      lastWidget.x,
-      lastWidget.x + lastWidget.w,
-      lastWidget.y,
-    );
-
-    if (lastWidget) {
-      ++result;
+  for (let widget of widgetsSet)
+  {
+    if (result === null || widget.y > result.y)
+    {
+      result = widget;
     }
+  }
+
+  return result;
+}
+
+export function getAboveMargins(layout, x, y, w, margin, rowHeight): number {
+  let result = [];
+  let widget = null;
+
+  while ((widget = findWidgetAbove(layout, x, y, w, margin, rowHeight))) {
+    result.push(widget);
+
+    x = widget.x;
+    y = widget.y;
+    w = widget.w;
   }
 
   return result;

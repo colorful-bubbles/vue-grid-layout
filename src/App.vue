@@ -138,6 +138,13 @@
             {"x":10,"y":4,"w":2,"h":2,"i":"17"},
             {"x":0,"y":9,"w":2,"h":3,"i":"18"},
             {"x":2,"y":6,"w":2,"h":2,"i":"19"}
+
+            // {x: 0, y: 0, w: 2, h: 62, i: "1"},
+            // {x: 2, y: 0, w: 2, h: 144, i: "2"},
+            // {x: 4, y: 0, w: 2, h: 69, i: "3"},
+            // {x: 0, y: 62, w: 2, h: 76, i: "4"},
+            // {x: 0, y: 144, w: 6, h: 70, i: "5"},
+            // {x: 4, y: 69, w: 2, h: 51, i: "6"},
         ],
     };
 
@@ -181,7 +188,7 @@
                 draggable: true,
                 resizable: true,
                 mirrored: false,
-                responsive: true,
+                responsive: false,
                 preventCollision: false,
                 compact: true,
                 rowHeight: 30,

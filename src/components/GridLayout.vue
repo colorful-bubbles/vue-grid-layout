@@ -176,7 +176,7 @@
                     //self.width = self.$el.offsetWidth;
                     addWindowEventListener('resize', self.onWindowResize);
 
-                    compact(self.layout, self.verticalCompact);
+                    compact(self.layout, self.verticalCompact, self.margin[1], self.rowHeight);
 
                     self.$emit('layout-updated',self.layout)
 
@@ -281,7 +281,7 @@
                         this.initResponsiveFeatures();
                     }
 
-                    compact(this.layout, this.verticalCompact);
+                    compact(this.layout, this.verticalCompact, this.margin[1], this.rowHeight);
                     this.eventBus.emit("updateWidth", this.width);
                     this.updateHeight();
 
@@ -304,8 +304,15 @@
                 // console.log("bottom: " + bottom(this.layout))
                 // console.log("rowHeight + margins: " + (this.rowHeight + this.margin[1]) + this.margin[1])
                 let lastWidget = findBottomWidget(this.layout);
-                const baseHeight = (lastWidget.y + lastWidget.h) * this.rowHeight;
-                const marginsNumber = getAboveMargins(this.layout, lastWidget.x, lastWidget.y, lastWidget.w);
+                const baseHeight = lastWidget ? ((lastWidget.y + lastWidget.h) * this.rowHeight) : 0;
+                const marginsNumber = lastWidget ? getAboveMargins(
+                    this.layout,
+                    lastWidget.x,
+                    lastWidget.y,
+                    lastWidget.w,
+                    this.margin[1],
+                    this.rowHeight,
+                ).length : 0;
 
                 const containerHeight = baseHeight + marginsNumber * this.margin[1];
                 return `${containerHeight}px`;
@@ -337,7 +344,7 @@
 
                 // Move the element to the dragged location.
                 this.$emit("update:layout", moveElement(this.layout, l, x, y, true, this.preventCollision));
-                compact(this.layout, this.verticalCompact);
+                compact(this.layout, this.verticalCompact, this.margin[1], this.rowHeight);
                 // needed because vue can't detect changes on array element properties
                 this.eventBus.emit("compact");
                 this.updateHeight();
@@ -398,7 +405,7 @@
 
                 if (this.responsive) this.responsiveGridLayout();
 
-                compact(this.layout, this.verticalCompact);
+                compact(this.layout, this.verticalCompact, this.margin[1], this.rowHeight);
                 this.eventBus.emit("compact");
                 this.updateHeight();
 

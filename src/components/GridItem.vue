@@ -664,7 +664,14 @@
             },
             calcPosition: function (x, y, w, h) {
                 const colWidth = this.calcColWidth();
-                const marginsAbove = getAboveMargins(this.layout.layout, x, y, w);
+                const marginsAbove = getAboveMargins(
+                    this.layout.layout,
+                    x,
+                    y,
+                    w === Infinity ? this.cols : w,
+                    this.margin[1],
+                    this.rowHeight,
+                ).length;
                 // add rtl support
                 let out;
                 if (this.renderRtl) {
@@ -758,6 +765,9 @@
                 }
             },
             compact: function () {
+                // if (this.i === '5') {
+                //     console.warn(this.y);
+                // }
                 this.createStyle();
             },
             tryMakeDraggable: function(){
